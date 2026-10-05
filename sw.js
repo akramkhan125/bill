@@ -1,5 +1,5 @@
 /* Unit Bill Calculator — offline service worker (cache-first, network refresh). */
-const CACHE = 'unit-bill-v1';
+const CACHE = 'unit-bill-v2';
 const ASSETS = ['/', '/index.html', '/manifest.webmanifest', '/icon.svg'];
 
 self.addEventListener('install', (e) => {
