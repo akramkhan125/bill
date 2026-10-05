@@ -258,7 +258,7 @@ dialog p{margin:0 0 20px;color:var(--mu)}
     <div class="tag" id="dTag">Live Preview</div><div class="calc" id="dCalc">&nbsp;</div><div class="amt dim" id="dAmt">PKR 0.00</div>
    </div>
    <button type="submit" class="pri" id="addBtn" disabled>Add Entry</button>
-   <div class="hint" style="text-align:center">Press <kbd>Enter</kbd> to add and keep typing.</div>
+   <div class="hint" style="text-align:center">Press <kbd>Enter</kbd> to add and keep typing. Amounts round to the nearest PKR 10.</div>
   </form>
  </section>
 
@@ -322,7 +322,8 @@ E.themeBtn.onclick=()=>theme(document.documentElement.dataset.theme==='dark'?'li
 
 /* ---- formatting: lakh/crore grouping, PKR, 2 decimals ---- */
 const grp=d=>d.length<=3?d:d.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+d.slice(-3);
-const money=p=>CUR+grp(String(Math.floor(p/100)))+'.'+String(p%100).padStart(2,'0');
+const money=p=>CUR+grp(String(Math.floor(p/100)))+'.'+String(p%100).padStart(2,'0')
+const r10=p=>Math.round(p/1000)*1000 // round paise to nearest PKR 10 (2154->2150, 2158->2160);
 const plain=p=>Math.floor(p/100)+'.'+String(p%100).padStart(2,'0');
 
 /* ---- parsing (string based, no float maths) ---- */
@@ -342,7 +343,7 @@ function pUnits(raw){const s=raw.trim();
  if(!Number.isSafeInteger(n))return{err:'That quantity is too large.'};return{n}}
 function tots(){let u=0,a=0;for(const e of S.entries){u+=e.u;a+=e.a}return{u,a,c:S.entries.length}}
 function calc(u,r){if(u>Math.floor(MAX/r))return{err:'This amount is too large to calculate safely.'};
- const a=u*r,t=tots();if(t.u+u>MAX||t.a+a>MAX)return{err:'Adding this would exceed the safe total limit.'};return{a}}
+ const a=r10(u*r),t=tots();if(t.u+u>MAX||t.a+a>MAX)return{err:'Adding this would exceed the safe total limit.'};return{a}}
 
 /* ---- persistence ---- */
 function save(){try{localStorage.setItem(KEY,JSON.stringify({ratePaise:S.rate,name:S.name,entries:S.entries.map(e=>({units:e.u,ratePaise:e.r}))}))}catch(_){storeOK=false}E.note.hidden=storeOK}
@@ -355,7 +356,7 @@ function load(){let d=null;
  let su=0,sa=0;const ok=[];
  if(Array.isArray(d.entries))for(const e of d.entries){
   if(!e||!Number.isSafeInteger(e.units)||e.units<=0||e.ratePaise!==rp||e.units>Math.floor(MAX/rp))continue;
-  const a=e.units*rp;if(su+e.units>MAX||sa+a>MAX)continue;   // amount always recomputed
+  const a=r10(e.units*rp);if(su+e.units>MAX||sa+a>MAX)continue;   // amount always recomputed
   su+=e.units;sa+=a;ok.push({id:nid++,u:e.units,r:rp,a})}
  S.rate=rp;S.entries=ok}
 
