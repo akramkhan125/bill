@@ -212,10 +212,15 @@ dialog p{margin:0 0 20px;color:var(--mu)}
  .pb-foot{margin-top:26px;text-align:center;font-size:11px;color:#888}
 }
 @media(prefers-reduced-motion:reduce){*,*:before{transition:none!important;animation:none!important}}
+/* update banner: appears when a new app version is ready */
+.upd-bar{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px;background:var(--grad);color:var(--ink);font-weight:700;font-size:.9rem}
+.upd-bar[hidden]{display:none}
+.upd-bar button{border:0;border-radius:999px;padding:8px 20px;min-height:44px;font-weight:800;font-size:.9rem;background:rgba(255,255,255,.28);color:inherit;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="wrap">
+<div class="upd-bar" id="updBar" hidden><span>New version available</span><button id="updBtn" type="button">Refresh</button></div>
 <header>
  <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2.5" width="16" height="19" rx="3"/><path d="M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01"/></svg></div>
  <div class="ti"><h1>Unit Bill Calculator</h1><p>Set your rate. Add units. Track your total.</p></div>
@@ -310,7 +315,7 @@ const KEY='unitBill.v1',TKEY='unitBill.theme',CUR='PKR\u00A0',MAX=Number.MAX_SAF
 const S={rate:null,entries:[],name:''};   // money is stored as integer paise
 let lastId=null,newId=null,lock=false,nid=1,storeOK=true,tt;
 const $=i=>document.getElementById(i);
-const E=['rate','rateBtn','rErr','rHint','rateForm','rateCard','chipTxt','chgBtn','units','uErr','entryForm','addBtn','disp','dTag','dCalc','dAmt','tU','tA','tC','sumCard','rows','list','undoBtn','resetBtn','copyBtn','printBtn','bname','pillC','note','dlg','dT','dM','dOk','themeBtn','themeLbl','toast'].reduce((o,i)=>(o[i]=$(i),o),{});
+const E=['rate','rateBtn','rErr','rHint','rateForm','rateCard','chipTxt','chgBtn','units','uErr','entryForm','addBtn','disp','dTag','dCalc','dAmt','tU','tA','tC','sumCard','rows','list','undoBtn','resetBtn','copyBtn','printBtn','bname','pillC','note','dlg','dT','dM','dOk','themeBtn','themeLbl','toast','updBar','updBtn'].reduce((o,i)=>(o[i]=$(i),o),{});
 
 /* ---- theme ---- */
 function theme(t,persist){document.documentElement.setAttribute('data-theme',t);
@@ -450,6 +455,8 @@ E.units.addEventListener('input',()=>{E.uErr.textContent='';rDisp()});     // pr
 E.rate.addEventListener('input',()=>E.rErr.textContent='');
 E.bname.addEventListener('input',()=>{S.name=E.bname.value.slice(0,60);save()});
 E.chgBtn.onclick=change;E.undoBtn.onclick=undo;E.resetBtn.onclick=reset;E.copyBtn.onclick=copy;E.printBtn.onclick=printBill;
+window.addEventListener('pwa-update',()=>{E.updBar.hidden=false});
+E.updBtn.onclick=()=>window.location.reload();
 
 /* ---- init ---- */
 theme(document.documentElement.dataset.theme||'dark',false);
@@ -458,10 +465,18 @@ load();E.bname.value=S.name;E.note.hidden=storeOK;all();
 })();
 </script>
 <script>
-/* Register the offline service worker (silent if unsupported). */
+/* Register the offline service worker and watch for app updates. */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('/sw.js').catch(function () {});
+    navigator.serviceWorker.register('/sw.js').then(function (reg) {
+      function watch(w){ w.addEventListener('statechange', function () {
+        if (w.state === 'installed' && navigator.serviceWorker.controller)
+          window.dispatchEvent(new Event('pwa-update'));
+      }); }
+      if (reg.installing) watch(reg.installing);
+      reg.addEventListener('updatefound', function(){ if (reg.installing) watch(reg.installing); });
+      setInterval(function(){ reg.update().catch(function(){}); }, 3600000); // also check while app sits open
+    }).catch(function () {});
   });
 }
 </script>
