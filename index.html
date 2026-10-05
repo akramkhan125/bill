@@ -157,6 +157,7 @@ label{display:block;font-weight:700;font-size:.92rem;margin-bottom:8px}
 .upd-bar[hidden]{display:none}
 .upd-bar button{border:0;border-radius:999px;padding:8px 20px;min-height:44px;font-weight:800;
  background:rgba(255,255,255,.28);color:inherit}
+.ver{text-align:center;color:var(--fa);font-size:.75rem;margin:6px 0 0}
 .toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom));z-index:400;
  transform:translateX(-50%) translateY(16px);opacity:0;pointer-events:none;background:var(--solid);
  color:var(--tx);border:1px solid var(--bd);padding:13px 22px;border-radius:999px;font-weight:700;
@@ -195,7 +196,8 @@ dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-bac
  #printSheet .termsline{font-size:13px;color:#555;margin:0 0 8px}
  #printSheet .sig{display:flex;justify-content:space-between;margin-top:44px;font-size:13px;color:#555}
  #printSheet .sig div{border-top:1px solid #999;padding-top:6px;width:42%;text-align:center}
- #printSheet .p-foot{margin-top:24px;text-align:center;font-size:12px;color:#8a6d1c;border-top:1px solid #e3d5ae;padding-top:10px}
+ #printSheet .p-words{margin-top:10px;font-size:13px;font-style:italic;color:#444}
+#printSheet .p-foot{margin-top:24px;text-align:center;font-size:12px;color:#8a6d1c;border-top:1px solid #e3d5ae;padding-top:10px}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -329,6 +331,7 @@ dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-bac
   </div>
   <p class="hint" style="text-align:center">Tip: your phone keyboard works here too.</p>
 </main>
+<p class="ver">Bill Calculator v3.3 &middot; Made by Akram Khan</p>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlgT" aria-describedby="dlgM">
@@ -358,7 +361,15 @@ const $=id=>document.getElementById(id);
 /* ---------- money: integer paise, lakh grouping, round to nearest PKR 10 ---------- */
 const grp=d=>d.length<=3?d:d.slice(0,-3).replace(/\B(?=(\d{2})+(?!\d))/g,',')+','+d.slice(-3);
 const money=p=>{p=Math.round(p);return CUR+grp(String(Math.floor(p/100)))+'.'+String(p%100).padStart(2,'0')};
-const r10=p=>Math.round(p/1000)*1000; // 2154 -> 2150, 2158 -> 2160
+const r10=p=>Math.round(p/1000)*1000;
+function inWords(paise){let n=Math.floor(Math.round(paise)/100);if(n===0)return 'Rupees Zero Only';
+ const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+ const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+ const two=x=>x<20?ones[x]:tens[Math.floor(x/10)]+(x%10?' '+ones[x%10]:'');
+ const three=x=>{const h=Math.floor(x/100),r=x%100;return (h?ones[h]+' Hundred'+(r?' ':''):'')+(r?two(r):'')};
+ let o='';const cr=Math.floor(n/1e7);n%=1e7;const lk=Math.floor(n/1e5);n%=1e5;const th=Math.floor(n/1e3);n%=1e3;
+ if(cr)o+=three(cr)+' Crore ';if(lk)o+=two(lk)+' Lakh ';if(th)o+=two(th)+' Thousand ';if(n)o+=three(n);
+ return 'Rupees '+o.trim()+' Only'} // 2154 -> 2150, 2158 -> 2160
 
 /* ---------- parsing (string-based, no float maths) ---------- */
 function pRate(raw){const s=String(raw).trim();
@@ -565,6 +576,7 @@ function buildPrintAll(){const t=totals();
  S.customers.forEach((c,i)=>{h+='<tr><td>'+(i+1)+'</td><td dir="auto"'+(c.lang==='ur'?' class="ur"':'')+'>'+esc(c.name)
   +'</td><td class="r num">'+grp(String(c.units))+'</td><td class="r num">'+money(c.amount)+'</td></tr>'});
  h+='</table><div class="totbox"><div class="tl">Grand Total &middot; '+grp(String(t.u))+' units</div><div class="ta num">'+money(t.a)+'</div></div>';
+ h+='<div class="p-words">'+inWords(t.a)+'</div>';
  h+=pFoot();
  $('printSheet').innerHTML=h}
 function printOne(id){const c=S.customers.find(x=>x.id===id);if(!c)return;
@@ -575,6 +587,7 @@ function printOne(id){const c=S.customers.find(x=>x.id===id);if(!c)return;
  h+='<table><tr><th>#</th><th class="r">Units</th></tr>';
  c.terms.forEach((t,i)=>{h+='<tr><td>'+(i+1)+'</td><td class="r num">'+grp(String(t))+'</td></tr>'});
  h+='</table><div class="totbox"><div class="tl">Total &middot; '+grp(String(c.units))+' units</div><div class="ta num">'+money(c.amount)+'</div></div>';
+ h+='<div class="p-words">'+inWords(c.amount)+'</div>';
  h+=pFoot();
  $('printSheet').innerHTML=h;doPrint()}
 function doPrint(){toast('Choose "Save as PDF" in the print dialog');setTimeout(()=>window.print(),350)}
