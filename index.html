@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#060b18">
-<meta name="app-version" content="3.6">
+<meta name="app-version" content="3.7">
 <title>Bill Calculator</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
@@ -177,29 +177,32 @@ dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-bac
 /* ============ PRINT ============ */
 #printSheet{display:none}
 @media print{
- .wrap,.splash,.toast,.upd-bar,dialog{display:none!important}
+ @page{margin:11mm}
+ .wrap,.splash,.toast,.upd-bar,.upd-banner,dialog{display:none!important}
  body{background:#fff}
- #printSheet{display:block!important;color:#111;font-family:system-ui,Arial,sans-serif;padding:10px;max-width:720px;margin:0 auto}
- #printSheet .ph{display:flex;align-items:center;gap:14px;border-bottom:3px solid #b8860b;padding-bottom:12px}
- #printSheet .ph img{width:74px;height:74px;border-radius:14px}
- #printSheet .ph h1{font-size:26px;margin:0;letter-spacing:-.01em}
- #printSheet .ph p{margin:3px 0 0;color:#6b5a2a;font-size:13px;font-weight:600}
- #printSheet .p-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0;font-size:13px;color:#333}
+ #printSheet{display:block!important;color:#111;font-family:system-ui,Arial,sans-serif;padding:0;max-width:100%;margin:0}
+ #printSheet .ph{display:flex;align-items:center;gap:8px;border-bottom:2px solid #b8860b;padding-bottom:8px}
+ #printSheet .ph img{width:42px;height:42px;border-radius:8px}
+ #printSheet .ph h1{font-size:18px;margin:0}
+ #printSheet .ph p{margin:1px 0 0;color:#6b5a2a;font-size:11px;font-weight:600}
+ #printSheet .p-meta{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:11.5px;color:#333}
  #printSheet .p-meta b{color:#111}
- #printSheet h2.p-sec{font-size:14px;margin:16px 0 6px;text-transform:uppercase;letter-spacing:.08em;color:#8a6d1c}
- #printSheet table{width:100%;border-collapse:collapse;font-size:14px}
- #printSheet th,#printSheet td{border:1px solid #bbb;padding:8px 10px;text-align:left}
- #printSheet th{background:#f7f1df;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:#6b5a2a}
+ #printSheet h2.p-sec{font-size:12px;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.06em;color:#8a6d1c}
+ #printSheet .cname{font-size:1.2em;font-weight:700;margin:2px 0 4px}
+ #printSheet .termsline{font-size:12px;color:#333;margin:2px 0 8px}
+ #printSheet table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:4px}
+ #printSheet th,#printSheet td{border:1px solid #999;padding:5px 8px;text-align:left}
+ #printSheet th{background:#f7f1df;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#6b5a2a}
  #printSheet .r{text-align:right}
- #printSheet .ur{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Urdu Typesetting',serif;font-size:1.35em;line-height:2}
- #printSheet .totbox{margin-top:14px;border:2px solid #b8860b;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;background:#fdf8ea}
- #printSheet .totbox .tl{font-size:12px;text-transform:uppercase;letter-spacing:.1em;color:#8a6d1c;font-weight:700}
- #printSheet .totbox .ta{font-size:24px;font-weight:800;white-space:nowrap}
- #printSheet .cname{font-size:20px;font-weight:800;margin:4px 0 2px}
- #printSheet .termsline{font-size:13px;color:#555;margin:0 0 8px}
- #printSheet .sig{display:flex;justify-content:space-between;margin-top:44px;font-size:13px;color:#555}
- #printSheet .sig div{border-top:1px solid #999;padding-top:6px;width:42%;text-align:center}
- #printSheet .p-foot{margin-top:24px;text-align:center;font-size:12px;color:#8a6d1c;border-top:1px solid #e3d5ae;padding-top:10px}
+ #printSheet .ur{font-family:'Jameel Noori Nastaleeq','Noto Nastaliq Urdu','Urdu Typesetting',serif;font-size:1.25em;line-height:1.8}
+ #printSheet tr.grand td{font-weight:800;background:#fdf8ea;border-top:2px solid #b8860b}
+ #printSheet .bigtotal{display:flex;justify-content:space-between;align-items:center;margin-top:10px;border:2px solid #b8860b;border-radius:10px;padding:10px 14px;background:#fdf8ea}
+ #printSheet .bigtotal span{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8a6d1c;font-weight:700}
+ #printSheet .bigtotal b{font-size:20px}
+ #printSheet .p-words{margin-top:6px;font-size:11.5px;font-style:italic;color:#333}
+ #printSheet .sig{display:flex;justify-content:space-between;gap:20px;margin-top:26px}
+ #printSheet .sig div{flex:1;border-top:1px solid #111;padding-top:4px;font-size:10.5px;color:#555;text-align:center}
+ #printSheet .p-foot{margin-top:10px;text-align:center;font-size:10.5px;color:#777;border-top:1px solid #ccc;padding-top:6px}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -334,7 +337,7 @@ dialog::backdrop{background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-bac
   </div>
   <p class="hint" style="text-align:center">Tip: your phone keyboard works here too.</p>
 </main>
-<p class="ver">Bill Calculator v3.6 &middot; Made by Akram Khan</p>
+<p class="ver">Bill Calculator v3.7 &middot; Made by Akram Khan</p>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlgT" aria-describedby="dlgM">
@@ -575,20 +578,20 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 $('printAllBtn').onclick=()=>{buildPrintAll();doPrint()};
 function buildPrintAll(){const t=totals();
  let h=pHead()+'<h2 class="p-sec">All Customers ('+t.n+')</h2>';
- h+='<table><tr><th>#</th><th>Customer</th><th class="r">Units</th><th class="r">Amount</th></tr>';
+ h+='<table><tr><th style="width:32px">#</th><th>Customer</th><th class="r">Units</th><th class="r">Amount</th></tr>';
  S.customers.forEach((c,i)=>{h+='<tr><td>'+(i+1)+'</td><td dir="auto"'+(c.lang==='ur'?' class="ur"':'')+'>'+esc(c.name)
-  +'</td><td class="r num">'+grp(String(c.units))+'</td><td class="r num">'+money(c.amount)+'</td></tr>'});
- h+='</table><div class="totbox"><div class="tl">Grand Total &middot; '+grp(String(t.u))+' units</div><div class="ta num">'+money(t.a)+'</div></div>';
+  +'</td><td class="r">'+grp(String(c.units))+'</td><td class="r">'+money(c.amount)+'</td></tr>'});
+ h+='<tr class="grand"><td></td><td>Grand Total</td><td class="r">'+grp(String(t.u))+'</td><td class="r">'+money(t.a)+'</td></tr></table>';
+ h+='<div class="p-words">'+inWords(t.a)+'</div>';
  h+=pFoot();
- $('printSheet').innerHTML=h}
+ $('printSheet').innerHTML=h;doPrint()}
 function printOne(id){const c=S.customers.find(x=>x.id===id);if(!c)return;
- const cls='cname'+(c.lang==='ur'?' ur':'');
+ const cls=c.lang==='ur'?'ur':'';
  let h=pHead()+'<h2 class="p-sec">Customer Bill</h2>';
- h+='<div class="'+cls+'" dir="auto">'+esc(c.name)+'</div>';
- h+='<p class="termsline num">'+c.terms.map(t=>grp(String(t))).join(' + ')+' = '+grp(String(c.units))+' units &times; '+money(S.rate)+'</p>';
- h+='<table><tr><th>#</th><th class="r">Units</th></tr>';
- c.terms.forEach((t,i)=>{h+='<tr><td>'+(i+1)+'</td><td class="r num">'+grp(String(t))+'</td></tr>'});
- h+='</table><div class="totbox"><div class="tl">Total &middot; '+grp(String(c.units))+' units</div><div class="ta num">'+money(c.amount)+'</div></div>';
+ h+='<div class="cname '+cls+'" dir="auto">'+esc(c.name)+'</div>';
+ h+='<p class="termsline">'+c.terms.map(t=>grp(String(t))).join(' + ')+' = '+grp(String(c.units))+' units &times; '+money(S.rate)+'</p>';
+ h+='<div class="bigtotal"><span>Total Bill</span><b>'+money(c.amount)+'</b></div>';
+ h+='<div class="p-words">'+inWords(c.amount)+'</div>';
  h+=pFoot();
  $('printSheet').innerHTML=h;doPrint()}
 let printTimer=null;
@@ -600,10 +603,11 @@ function doPrint(){
   hideSel.forEach(s=>{const el=document.querySelector(s);if(el)el.style.display='none'});
   sh.style.display='block';
   const restore=()=>{hideSel.forEach(s=>{const el=document.querySelector(s);if(el)el.style.display=''});
-   sh.style.display='';window.removeEventListener('afterprint',restore);
-   if(printTimer){clearTimeout(printTimer);printTimer=null}};
-  window.addEventListener('afterprint',restore);
-  printTimer=setTimeout(restore,30000);
+   sh.style.display='';if(printTimer){clearTimeout(printTimer);printTimer=null}};
+  const mq=window.matchMedia('print');
+  const onCh=e=>{if(!e.matches){restore();try{mq.removeEventListener('change',onCh)}catch(_){}}};
+  try{mq.addEventListener('change',onCh)}catch(_){}
+  printTimer=setTimeout(()=>{restore();try{mq.removeEventListener('change',onCh)}catch(_){}},120000);
   window.print();
  },350)}
 
@@ -646,7 +650,7 @@ try{const sp=$('splash');
  sp.addEventListener('click',hide);setTimeout(hide,1400)}catch(_){}
 // update banner wiring
 window.addEventListener('pwa-update',()=>{$('updBar').hidden=false});
-const APP_VER='3.6';
+const APP_VER='3.7';
 function showUpdBar(){$('updBar').hidden=false}
 async function applyUpdate(){toast('Updating to the new version\u2026');
  try{if('caches' in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(_){}
