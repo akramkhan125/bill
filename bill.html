@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Unit Bill Calculator</title>
+<style>
+  :root{
+    --bg:#070d1a; --bg2:#0b1426; --card:#101b30; --card2:#15233d; --line:#1f3050;
+    --text:#e8eefc; --muted:#8fa3c7; --accent:#10d9a0; --accent2:#0ea5a4;
+    --danger:#ff6b81; --warn:#ffc857; --radius:18px;
+    --field:#0a1424; --button:#132039; --button-hover:#1a2c4d; --display:#08111f;
+    --table-head:#0b1628; --summary-bg:#10304a; --summary-bg2:#0e2238; --sticky:rgba(7,13,26,.88);
+    --title-start:#fff; --title-end:#9ff3d8;
+    --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  :root[data-theme="light"]{
+    color-scheme:light;
+    --bg:#f3f7f5; --bg2:#eaf3ef; --card:#fff; --card2:#f8fcfa; --line:#d3e2dc;
+    --text:#18332c; --muted:#637d74; --accent:#087f5b; --accent2:#13a678;
+    --danger:#c33b51; --warn:#9b6800; --field:#fff; --button:#edf5f1;
+    --button-hover:#e0eee7; --display:#f1f8f4; --table-head:#eaf3ee;
+    --summary-bg:#e3f3ec; --summary-bg2:#f1faf5; --sticky:rgba(243,247,245,.9);
+    --title-start:#164438; --title-end:#087f5b;
+  }
+  :root[data-theme="dark"]{color-scheme:dark}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; min-height:100vh; font-family:var(--font); color:var(--text);
+    background:radial-gradient(1100px 600px at 80% -10%,var(--bg2) 0%,transparent 60%),
+           radial-gradient(900px 500px at -10% 10%,var(--summary-bg) 0%,transparent 55%),var(--bg);
+    background-attachment:fixed; line-height:1.4;
+    padding:0 0 env(safe-area-inset-bottom);
+  }
+  .wrap{max-width:1120px;margin:0 auto;padding:20px 16px 48px}
+  header{padding:18px 4px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+  header h1{margin:0;font-size:clamp(1.5rem,5vw,2.2rem);letter-spacing:-.02em;
+    background:linear-gradient(90deg,var(--title-start),var(--title-end));
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  header p{margin:6px 0 0;color:var(--muted)}
+
+  /* Layout: single column on phones, two columns on desktop */
+  .grid{display:grid;gap:16px;grid-template-columns:1fr;
+    grid-template-areas:"summary" "rate" "entry" "history"}
+  .a-summary{grid-area:summary}.a-rate{grid-area:rate}.a-entry{grid-area:entry}.a-history{grid-area:history}
+  @media (min-width:900px){
+    .grid{grid-template-columns:1.1fr 1fr;align-items:start;gap:20px;
+      grid-template-areas:"rate summary" "entry history"}
+  }
+
+  .card{background:linear-gradient(160deg,var(--card2),var(--card));border:1px solid var(--line);
+    border-radius:var(--radius);padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  .card h2{margin:0 0 14px;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+  label{display:block;font-weight:600;margin-bottom:8px}
+  .field{display:flex;gap:10px;flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 160px;min-width:0;min-height:52px;padding:0 16px;font:inherit;font-size:1.15rem;color:var(--text);
+    background:var(--field);border:1.5px solid var(--line);border-radius:14px;
+    font-variant-numeric:tabular-nums;transition:border-color .2s,box-shadow .2s}
+  input[type=text]::placeholder{color:#4c628a}
+  input[type=text]:disabled{opacity:.55;cursor:not-allowed}
+  #units{font-size:1.6rem;min-height:64px;font-weight:600}
+  .err{min-height:1.3em;margin:8px 2px 0;color:var(--danger);font-size:.9rem}
+  .hint{margin:8px 2px 0;color:var(--muted);font-size:.88rem}
+
+  button{font:inherit;font-weight:600;min-height:52px;padding:0 20px;border-radius:14px;border:1.5px solid var(--line);
+    background:var(--button);color:var(--text);cursor:pointer;transition:transform .12s,background .2s,border-color .2s,opacity .2s}
+  button:hover:not(:disabled){background:var(--button-hover);border-color:var(--accent)}
+  button:active:not(:disabled){transform:scale(.97)}
+  button:disabled{opacity:.45;cursor:not-allowed}
+  .primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#042019;border-color:transparent}
+  .primary:hover:not(:disabled){background:linear-gradient(135deg,#2cf0b6,#14b8b6);border-color:transparent}
+  .danger{color:var(--danger)}
+  .danger:hover:not(:disabled){border-color:var(--danger)}
+  .theme-toggle{flex:0 0 auto;display:flex;align-items:center;gap:9px;padding:0 14px}
+  .theme-icon{font-size:1.15rem;line-height:1}
+  :focus-visible{outline:3px solid #7cf5d6;outline-offset:2px}
+  #addBtn{width:100%;margin-top:14px;min-height:58px;font-size:1.1rem}
+
+  /* Big calculation display */
+  .display{margin-top:18px;padding:18px;border-radius:16px;background:var(--display);border:1px solid var(--line);
+    text-align:center;position:relative;overflow:hidden}
+  .display .tag{font-size:.75rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:600}
+  .display .tag.last{color:var(--accent)}
+  .display .calc{margin-top:6px;font-size:clamp(1rem,3.6vw,1.35rem);color:var(--muted);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;min-height:1.6em}
+  .display .amount{margin-top:2px;font-size:clamp(2.4rem,11vw,4.6rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;
+    font-variant-numeric:tabular-nums;color:var(--text);overflow-wrap:anywhere;
+    text-shadow:0 0 30px rgba(16,217,160,.25)}
+  .display .amount.dim{color:var(--muted);text-shadow:none;opacity:.65}
+  .flash{animation:flash .7s ease}
+  @keyframes flash{0%{box-shadow:0 0 0 0 rgba(16,217,160,.7);border-color:var(--accent)}100%{box-shadow:0 0 0 18px rgba(16,217,160,0)}}
+
+  /* Summary */
+  .summary{display:grid;gap:14px}
+  .stat .k{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .stat .v{font-weight:800;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+  .stat.units .v{font-size:clamp(1.6rem,4vw,2.2rem)}
+  .stat.total .v{font-size:clamp(2rem,5vw,3rem);color:var(--accent)}
+  .stat.count .v{font-size:1.3rem}
+  .a-summary .card{border-color:var(--accent);background:linear-gradient(160deg,var(--summary-bg),var(--summary-bg2))}
+  @media (max-width:899px){
+    .a-summary{position:sticky;top:0;z-index:20;margin:0 -16px;padding:8px 16px;
+      background:var(--sticky);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+    .a-summary .card{padding:10px 14px}
+    .a-summary h2{display:none}
+    .summary{grid-template-columns:1fr 1.5fr .6fr;gap:10px;align-items:end}
+    .stat .k{font-size:.62rem}
+    .stat.units .v{font-size:1.05rem}
+    .stat.total .v{font-size:1.25rem}
+    .stat.count .v{font-size:1rem}
+  }
+
+  /* History */
+  .tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .tools button{flex:1 1 150px}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px}
+  table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;min-width:440px}
+  th,td{padding:12px 12px;text-align:right;white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--table-head);font-weight:600}
+  tbody tr{border-top:1px solid var(--line)}
+  tbody tr:nth-child(even){background:rgba(255,255,255,.02)}
+  td.amt{font-weight:700;color:var(--accent)}
+  td.empty{text-align:center;color:var(--muted);padding:28px}
+  .del{min-height:44px;min-width:44px;padding:0 12px;font-size:.85rem}
+  .note{margin-top:12px;color:var(--warn);font-size:.85rem}
+
+  /* Dialog */
+  dialog{border:1px solid var(--line);border-radius:var(--radius);background:var(--card2);color:var(--text);
+    max-width:min(440px,92vw);padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+  dialog::backdrop{background:rgba(3,7,15,.7);backdrop-filter:blur(3px)}
+  dialog h3{margin:0 0 8px}
+  dialog p{margin:0 0 20px;color:var(--muted)}
+  dialog .row{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Unit Bill Calculator</h1>
+      <p>Set your rate. Add units. Track your total.</p>
+    </div>
+    <button type="button" class="theme-toggle" id="themeBtn" aria-label="Switch to light theme" title="Switch to light theme">
+      <span class="theme-icon" aria-hidden="true">☼</span><span id="themeLabel">Light</span>
+    </button>
+  </header>
+
+  <main class="grid">
+    <!-- SUMMARY -->
+    <section class="a-summary" aria-label="Bill summary">
+      <div class="card" id="summaryCard">
+        <h2>Bill Summary</h2>
+        <div class="summary" aria-live="polite">
+          <div class="stat units"><div class="k">Total Units</div><div class="v" id="totUnits">0</div></div>
+          <div class="stat total"><div class="k">Total Amount</div><div class="v" id="totAmount">PKR 0.00</div></div>
+          <div class="stat count"><div class="k">Entries</div><div class="v" id="totCount">0</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RATE -->
+    <section class="a-rate card" aria-labelledby="rateH">
+      <h2 id="rateH">Step 1 · Unit Rate</h2>
+      <form id="rateForm" novalidate>
+        <label for="rate">Unit Rate (PKR)</label>
+        <div class="field">
+          <input type="text" id="rate" inputmode="decimal" autocomplete="off" placeholder="e.g. 32.32" aria-describedby="rateErr rateHint">
+          <button type="submit" class="primary" id="rateBtn">Set Rate</button>
+        </div>
+        <div class="err" id="rateErr" role="alert"></div>
+        <div class="hint" id="rateHint"></div>
+      </form>
+    </section>
+
+    <!-- ENTRY -->
+    <section class="a-entry card" aria-labelledby="entryH">
+      <h2 id="entryH">Step 2 · Add Units</h2>
+      <form id="entryForm" novalidate>
+        <label for="units">Enter Units</label>
+        <input type="text" id="units" inputmode="numeric" autocomplete="off" placeholder="e.g. 1234" style="width:100%" aria-describedby="unitsErr" disabled>
+        <div class="err" id="unitsErr" role="alert"></div>
+
+        <div class="display" id="display" aria-live="polite">
+          <div class="tag" id="dTag">Live Preview</div>
+          <div class="calc" id="dCalc">&nbsp;</div>
+          <div class="amount dim" id="dAmount">PKR 0.00</div>
+        </div>
+        <button type="submit" class="primary" id="addBtn" disabled>Add Entry</button>
+      </form>
+    </section>
+
+    <!-- HISTORY -->
+    <section class="a-history card" aria-labelledby="histH">
+      <h2 id="histH">Entry History</h2>
+      <div class="tools">
+        <button type="button" id="undoBtn" disabled>Undo Last Entry</button>
+        <button type="button" id="resetBtn" class="danger">New Bill / Reset</button>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th scope="col">#</th><th scope="col">Units</th><th scope="col">Rate</th><th scope="col">Amount</th><th scope="col"><span style="position:absolute;left:-9999px">Action</span></th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div class="note" id="storeNote" hidden>Storage is unavailable, so this bill won't be kept after refresh.</div>
+    </section>
+  </main>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlgT">
+  <form method="dialog">
+    <h3 id="dlgT"></h3>
+    <p id="dlgM"></p>
+    <div class="row">
+      <button value="cancel" id="dlgCancel">Cancel</button>
+      <button value="ok" class="primary" id="dlgOk">Confirm</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ---------- Constants & state ---------- */
+  const KEY = 'unitBill.v1';
+  const THEME_KEY = 'unitBill.theme';
+  const MAX = Number.MAX_SAFE_INTEGER;
+  const state = { ratePaise: null, entries: [] };   // all money is integer paise
+  let lastAddedId = null;                            // in-memory only
+  let submitLock = false;                            // blocks double submissions
+  let nextId = 1;
+  let storageOK = true;
+
+  const $ = id => document.getElementById(id);
+  const el = {
+    rate:$('rate'), rateBtn:$('rateBtn'), rateErr:$('rateErr'), rateHint:$('rateHint'), rateForm:$('rateForm'),
+    units:$('units'), unitsErr:$('unitsErr'), entryForm:$('entryForm'), addBtn:$('addBtn'),
+    display:$('display'), dTag:$('dTag'), dCalc:$('dCalc'), dAmount:$('dAmount'),
+    totUnits:$('totUnits'), totAmount:$('totAmount'), totCount:$('totCount'), summaryCard:$('summaryCard'),
+    rows:$('rows'), undoBtn:$('undoBtn'), resetBtn:$('resetBtn'), storeNote:$('storeNote'),
+    dlg:$('dlg'), dlgT:$('dlgT'), dlgM:$('dlgM'), dlgOk:$('dlgOk'),
+    themeBtn:$('themeBtn'), themeLabel:$('themeLabel')
+  };
+
+  /* ---------- Formatting (Indian grouping, 2 decimals) ---------- */
+  function groupIndian(digits) {
+    if (digits.length <= 3) return digits;
+    const last3 = digits.slice(-3);
+    const rest = digits.slice(0, -3).replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    return rest + ',' + last3;
+  }
+  function fmtMoney(p) {
+    const r = Math.floor(p / 100), ps = p % 100;
+    return 'PKR ' + groupIndian(String(r)) + '.' + String(ps).padStart(2, '0');
+  }
+  const fmtUnits = n => groupIndian(String(n));
+  const plainRate = p => Math.floor(p / 100) + '.' + String(p % 100).padStart(2, '0');
+
+  /* ---------- Parsing & validation ---------- */
+  function parseRate(raw) {
+    const s = raw.trim();
+    if (!s) return { err: 'Enter a unit rate, e.g. 32.32.' };
+    if (/[^0-9.]/.test(s)) return { err: 'Use digits and a decimal point only (no signs, commas or letters).' };
+    if (!/^\d+(\.\d{1,2})?$/.test(s)) return { err: 'Enter a valid rate with up to two decimal places, e.g. 32.32.' };
+    const [w, f = ''] = s.split('.');
+    if (w.replace(/^0+/, '').length > 12) return { err: 'That rate is too large.' };
+    const paise = Number(w) * 100 + Number((f + '00').slice(0, 2));
+    if (!Number.isSafeInteger(paise)) return { err: 'That rate is too large.' };
+    if (paise <= 0) return { err: 'Rate must be greater than zero.' };
+    return { paise };
+  }
+  function parseUnits(raw) {
+    const s = raw.trim();
+    if (!s) return { err: 'Enter the number of units.' };
+    if (!/^\d+$/.test(s)) return { err: 'Units must be a positive whole number (no decimals, signs or letters).' };
+    if (s.replace(/^0+/, '').length > 15) return { err: 'That quantity is too large.' };
+    const n = Number(s);
+    if (n <= 0) return { err: 'Units must be greater than zero.' };
+    if (!Number.isSafeInteger(n)) return { err: 'That quantity is too large.' };
+    return { n };
+  }
+  // Safely compute amount and the new totals; returns error text if anything overflows.
+  function computeEntry(units, ratePaise) {
+    if (units > Math.floor(MAX / ratePaise)) return { err: 'This amount is too large to calculate safely.' };
+    const amount = units * ratePaise;
+    const t = totals();
+    if (t.units + units > MAX || t.amount + amount > MAX) return { err: 'Adding this would exceed the safe total limit.' };
+    return { amount };
+  }
+  function totals() {
+    let units = 0, amount = 0;
+    for (const e of state.entries) { units += e.units; amount += e.amountPaise; }
+    return { units, amount, count: state.entries.length };
+  }
+
+  /* ---------- Persistence ---------- */
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify({
+        ratePaise: state.ratePaise,
+        entries: state.entries.map(e => ({ units: e.units, ratePaise: e.ratePaise, amountPaise: e.amountPaise }))
+      }));
+    } catch (_) { storageOK = false; }
+    el.storeNote.hidden = storageOK;
+  }
+  function load() {
+    let data = null;
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (raw) data = JSON.parse(raw);
+    } catch (_) { /* corrupted or unavailable */ }
+    try { localStorage.getItem(KEY); } catch (_) { storageOK = false; }
+    if (!data || typeof data !== 'object') return;
+    const rp = data.ratePaise;
+    if (!Number.isSafeInteger(rp) || rp <= 0) return;
+    const clean = [];
+    let su = 0, sa = 0;
+    if (Array.isArray(data.entries)) {
+      for (const e of data.entries) {
+        if (!e || !Number.isSafeInteger(e.units) || e.units <= 0 || e.ratePaise !== rp) continue;
+        if (e.units > Math.floor(MAX / rp)) continue;
+        const amt = e.units * rp;                       // always recomputed, never trusted
+        if (su + e.units > MAX || sa + amt > MAX) continue;
+        su += e.units; sa += amt;
+        clean.push({ id: nextId++, units: e.units, ratePaise: rp, amountPaise: amt });
+      }
+    }
+    state.ratePaise = rp;
+    state.entries = clean;
+  }
+
+  /* ---------- Confirmation dialog ---------- */
+  function confirmBox(title, msg, okLabel) {
+    return new Promise(resolve => {
+      el.dlgT.textContent = title; el.dlgM.textContent = msg; el.dlgOk.textContent = okLabel;
+      const done = () => { el.dlg.removeEventListener('close', done); resolve(el.dlg.returnValue === 'ok'); };
+      el.dlg.addEventListener('close', done);
+      if (typeof el.dlg.showModal === 'function') el.dlg.showModal();
+      else { el.dlg.removeEventListener('close', done); resolve(window.confirm(title + '\n\n' + msg)); }
+    });
+  }
+
+  /* ---------- Rendering ---------- */
+  function flash(node) {
+    node.classList.remove('flash'); void node.offsetWidth; node.classList.add('flash');
+  }
+  function renderRate() {
+    const locked = state.ratePaise !== null;
+    el.rate.disabled = locked;
+    el.rate.value = locked ? plainRate(state.ratePaise) : el.rate.value;
+    el.rateBtn.textContent = locked ? 'Change Rate' : 'Set Rate';
+    el.rateBtn.classList.toggle('primary', !locked);
+    el.rateHint.textContent = !locked ? 'Set a rate before adding entries.'
+      : state.entries.length ? 'Rate is fixed for this bill. Changing it requires starting a new bill.'
+      : 'Rate is locked. You can still change it until you add an entry.';
+    el.units.disabled = !locked;
+    el.addBtn.disabled = !locked;
+  }
+  function renderTotals() {
+    const t = totals();
+    el.totUnits.textContent = fmtUnits(t.units);
+    el.totAmount.textContent = fmtMoney(t.amount);
+    el.totCount.textContent = String(t.count);
+    el.undoBtn.disabled = t.count === 0;
+  }
+  function renderRows() {
+    el.rows.textContent = '';
+    if (!state.entries.length) {
+      const tr = document.createElement('tr'), td = document.createElement('td');
+      td.colSpan = 5; td.className = 'empty'; td.textContent = 'No entries yet. Add your first quantity above.';
+      tr.appendChild(td); el.rows.appendChild(tr); return;
+    }
+    for (let i = state.entries.length - 1; i >= 0; i--) {     // newest first
+      const e = state.entries[i];
+      const tr = document.createElement('tr');
+      const cells = [String(i + 1), fmtUnits(e.units), fmtMoney(e.ratePaise), fmtMoney(e.amountPaise)];
+      cells.forEach((txt, c) => {
+        const td = document.createElement('td'); td.textContent = txt;
+        if (c === 3) td.className = 'amt';
+        tr.appendChild(td);
+      });
+      const tdA = document.createElement('td');
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'del danger'; b.textContent = 'Delete';
+      b.setAttribute('aria-label', 'Delete entry ' + (i + 1));
+      b.addEventListener('click', () => deleteEntry(e.id));
+      tdA.appendChild(b); tr.appendChild(tdA); el.rows.appendChild(tr);
+    }
+  }
+  // Big display: live preview while typing, "Last Added" when idle after an add.
+  function renderDisplay() {
+    const raw = el.units.value.trim();
+    el.dTag.classList.remove('last');
+    if (raw) {
+      el.dTag.textContent = 'Live Preview';
+      const u = parseUnits(raw);
+      if (state.ratePaise !== null && !u.err) {
+        const c = computeEntry(u.n, state.ratePaise);
+        if (!c.err) {
+          el.dCalc.textContent = fmtUnits(u.n) + ' × ' + fmtMoney(state.ratePaise);
+          el.dAmount.textContent = fmtMoney(c.amount); el.dAmount.classList.remove('dim'); return;
+        }
+      }
+      el.dCalc.textContent = '\u00A0'; el.dAmount.textContent = 'PKR 0.00'; el.dAmount.classList.add('dim'); return;
+    }
+    const last = state.entries.find(e => e.id === lastAddedId);
+    if (last) {
+      el.dTag.textContent = 'Last Added'; el.dTag.classList.add('last');
+      el.dCalc.textContent = fmtUnits(last.units) + ' × ' + fmtMoney(last.ratePaise);
+      el.dAmount.textContent = fmtMoney(last.amountPaise); el.dAmount.classList.remove('dim');
+    } else {
+      el.dTag.textContent = 'Live Preview';
+      el.dCalc.textContent = state.ratePaise === null ? 'Set a rate to begin' : 'Type units to see the amount';
+      el.dAmount.textContent = 'PKR 0.00'; el.dAmount.classList.add('dim');
+    }
+  }
+  function renderAll() { renderRate(); renderTotals(); renderRows(); renderDisplay(); }
+
+  /* ---------- Actions ---------- */
+  function setRate() {
+    el.rateErr.textContent = '';
+    if (state.ratePaise !== null) return changeRate();
+    const r = parseRate(el.rate.value);
+    if (r.err) { el.rateErr.textContent = r.err; el.rate.focus(); return; }
+    state.ratePaise = r.paise;
+    save(); renderAll(); el.units.focus();
+  }
+  async function changeRate() {
+    if (state.entries.length === 0) {
+      state.ratePaise = null; save(); renderAll(); el.rate.focus(); el.rate.select(); return;
+    }
+    const ok = await confirmBox('Start a new bill?',
+      'The rate is fixed for this bill. To use a different rate you need a new bill, which clears all ' + state.entries.length + ' saved entries.',
+      'Clear & change rate');
+    if (!ok) return;
+    state.entries = []; state.ratePaise = null; lastAddedId = null; el.units.value = '';
+    save(); renderAll(); el.rate.focus(); el.rate.select();
+  }
+  function addEntry() {
+    if (submitLock || state.ratePaise === null) return;
+    el.unitsErr.textContent = '';
+    const u = parseUnits(el.units.value);
+    if (u.err) { el.unitsErr.textContent = u.err; el.units.focus(); return; }
+    const c = computeEntry(u.n, state.ratePaise);
+    if (c.err) { el.unitsErr.textContent = c.err; el.units.focus(); return; }
+    submitLock = true; setTimeout(() => { submitLock = false; }, 400);   // prevents duplicate submits
+    const entry = { id: nextId++, units: u.n, ratePaise: state.ratePaise, amountPaise: c.amount };
+    state.entries.push(entry); lastAddedId = entry.id;
+    el.units.value = '';
+    save(); renderAll(); flash(el.summaryCard); flash(el.display); el.units.focus();
+  }
+  function deleteEntry(id) {
+    state.entries = state.entries.filter(e => e.id !== id);
+    if (lastAddedId === id) lastAddedId = null;
+    save(); renderAll();
+  }
+  function undoLast() {
+    if (!state.entries.length) return;
+    deleteEntry(state.entries[state.entries.length - 1].id);
+    if (!el.units.disabled) el.units.focus();
+  }
+  async function resetBill() {
+    const ok = await confirmBox('Start a new bill?',
+      'This clears the rate and all saved entries. This cannot be undone.', 'Clear bill');
+    if (!ok) return;
+    state.entries = []; state.ratePaise = null; lastAddedId = null;
+    el.units.value = ''; el.rate.value = ''; el.rateErr.textContent = ''; el.unitsErr.textContent = '';
+    save(); renderAll(); el.rate.focus();
+  }
+
+  /* ---------- Events ---------- */
+  el.rateForm.addEventListener('submit', e => { e.preventDefault(); setRate(); });
+  el.entryForm.addEventListener('submit', e => { e.preventDefault(); addEntry(); });
+  el.units.addEventListener('keydown', e => { if (e.key === 'Enter' && e.repeat) e.preventDefault(); });
+  el.units.addEventListener('input', () => { el.unitsErr.textContent = ''; renderDisplay(); });   // preview only, never saves
+  el.rate.addEventListener('input', () => { el.rateErr.textContent = ''; });
+  el.undoBtn.addEventListener('click', undoLast);
+  el.resetBtn.addEventListener('click', resetBill);
+  el.themeBtn.addEventListener('click', () => {
+    const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    el.themeLabel.textContent = theme === 'dark' ? 'Light' : 'Dark';
+    el.themeBtn.setAttribute('aria-label', 'Switch to ' + (theme === 'dark' ? 'light' : 'dark') + ' theme');
+    el.themeBtn.title = 'Switch to ' + (theme === 'dark' ? 'light' : 'dark') + ' theme';
+    el.themeBtn.querySelector('.theme-icon').textContent = theme === 'dark' ? '☾' : '☼';
+    try { localStorage.setItem(THEME_KEY, theme); } catch (_) { /* theme still works for this page */ }
+  });
+
+  /* ---------- Init ---------- */
+  try {
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
+  } catch (_) { /* use the default dark theme */ }
+  const initialTheme = document.documentElement.dataset.theme || 'dark';
+  document.documentElement.dataset.theme = initialTheme;
+  el.themeLabel.textContent = initialTheme === 'dark' ? 'Light' : 'Dark';
+  el.themeBtn.setAttribute('aria-label', 'Switch to ' + (initialTheme === 'dark' ? 'light' : 'dark') + ' theme');
+  el.themeBtn.title = 'Switch to ' + (initialTheme === 'dark' ? 'light' : 'dark') + ' theme';
+  el.themeBtn.querySelector('.theme-icon').textContent = initialTheme === 'dark' ? '☾' : '☼';
+  load();
+  el.storeNote.hidden = storageOK;
+  renderAll();
+  if (state.ratePaise !== null) el.units.focus(); else el.rate.focus();
+})();
+</script>
+</body>
+</html>
