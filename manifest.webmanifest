@@ -1,19 +1,14 @@
 {
-  "name": "Bill Calculator",
-  "short_name": "Bill Calc",
-  "description": "Bill Calculator \u2014 Made by Akram Khan",
-  "start_url": "pmw.html",
-  "scope": "./",
+  "name": "Unit Bill Calculator",
+  "short_name": "Unit Bill",
+  "description": "Set your rate. Add units. Track your total. Works offline.",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#FAF6EF",
-  "theme_color": "#FAF6EF",
+  "background_color": "#141310",
+  "theme_color": "#060b18",
   "icons": [
-    {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    }
+    { "src": "/icon-v2.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }
