@@ -1,0 +1,19 @@
+{
+  "name": "Bill Calculator",
+  "short_name": "Bill Calc",
+  "description": "Bill Calculator \u2014 Made by Akram Khan",
+  "start_url": "pmw.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF6EF",
+  "theme_color": "#FAF6EF",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
