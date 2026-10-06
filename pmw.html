@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#FAF6EF">
-  <title>BillPro — Smart Billing</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <title>Bill Calculator — Made by Akram Khan</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;800;900&family=Jameel+Noori+Nastaleeq&family=Noto+Nastaliq+Urdu:wght@400;600;700&display=swap" rel="stylesheet">
@@ -1436,7 +1439,7 @@
     <!-- TOP BAR -->
     <header class="top-bar">
       <div class="brand">
-        <div class="wordmark">BillPro</div>
+        <div class="wordmark">Bill Calculator</div>
         <div class="date-line" id="todayDate"></div>
       </div>
       <div class="top-actions">
@@ -2468,7 +2471,7 @@
             const paid = getBillPaidAmount(bill);
             const rem = getBillRemaining(bill);
             const statusText = isPaid ? 'Paid ✓' : isPart ? `Partial (PKR ${formatPKR(paid)} of PKR ${formatPKR(bill.amount)})` : isOver ? 'Overdue ⚠️' : 'Unpaid';
-            let text = `*BillPro Invoice*\n${bill.invoiceNo}\nCustomer: ${bill.customer}\nUnits: ${bill.units}\nAmount: PKR ${formatPKR(bill.amount)}\nStatus: ${statusText}`;
+            let text = `*Bill Calculator Invoice*\n${bill.invoiceNo}\nCustomer: ${bill.customer}\nUnits: ${bill.units}\nAmount: PKR ${formatPKR(bill.amount)}\nStatus: ${statusText}`;
             if (isPart) text += `\nRemaining: PKR ${formatPKR(rem)}`;
             if (bill.dueDate) text += `\nDue: ${formatDate(new Date(bill.dueDate))}`;
             text += '\nThank you!';
@@ -2733,7 +2736,7 @@
       });
 
       function generateQrPayload(bill) {
-        return `BillPro Invoice\n${bill.invoiceNo}\nCustomer: ${bill.customer}\nAmount: PKR ${bill.amount}\nUnits: ${bill.units}\nDate: ${formatDate(new Date(bill.date))}`;
+        return `Bill Calculator Invoice\n${bill.invoiceNo}\nCustomer: ${bill.customer}\nAmount: PKR ${bill.amount}\nUnits: ${bill.units}\nDate: ${formatDate(new Date(bill.date))}`;
       }
 
       // Simple QR-like visual (not scannable, but decorative)
@@ -2874,7 +2877,8 @@
                 <div class="thank-you">Thank you for your business.</div>
               </div>
             </div>
-          </body>
+          <script>if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});}</script>
+</body>
           </html>
         `;
       }
@@ -2892,7 +2896,7 @@
           <html>
           <head>
             <meta charset="UTF-8">
-            <title>All Bills — BillPro</title>
+            <title>All Bills — Bill Calculator</title>
             <style>
               * { margin: 0; padding: 0; box-sizing: border-box; }
               body { background: #DFBFB7; font-family: Georgia, serif; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; gap: 30px; }
