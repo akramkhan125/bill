@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en" data-theme="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#060b18"><meta name="app-version" content="4.4"><title>Bill Calculator</title><link rel="manifest" href="/manifest.webmanifest"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Bill Calculator"><link rel="icon" type="image/svg+xml" href="/icon-v2.svg"><link rel="apple-touch-icon" href="/icon-v2.svg">
+<!DOCTYPE html><html lang="en" data-theme="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#060b18"><meta name="app-version" content="4.5"><title>Bill Calculator</title><link rel="manifest" href="/manifest.webmanifest"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Bill Calculator"><link rel="icon" type="image/svg+xml" href="/icon-v2.svg"><link rel="apple-touch-icon" href="/icon-v2.svg">
 <script>(function(){var t=null;try{t=localStorage.getItem('billcalc.theme')}catch(e){}
 if(t!=='light'&&t!=='dark')t=(matchMedia&&matchMedia('(prefers-color-scheme:light)').matches)?'light':'dark';
 document.documentElement.setAttribute('data-theme',t)})();</script>
@@ -100,7 +100,7 @@ S.customers=[{id:nid++,name:'Previous Bill',lang:'en',terms,units:u,amount:r10(u
 localStorage.removeItem(OLDKEY)}catch(_){}}
 const raw=localStorage.getItem(KEY);
 try{const d2=JSON.parse(localStorage.getItem(KEY));if(d2){if(d2.settings)S.settings=Object.assign({color:'gold',lang:'en',defRate:''},d2.settings);if(Array.isArray(d2.savedNames))S.savedNames=d2.savedNames.slice(0,30)}}catch(_){}if(!raw)return;
-const d=JSON.parse(raw),rp=d.ratePaise;
+const d=JSON.parse(raw),rp=d.rate||d.ratePaise;
 if(!Number.isSafeInteger(rp)||rp<=0)return;
 S.rate=rp;
 if(Array.isArray(d.customers))for(const c of d.customers){
@@ -118,18 +118,17 @@ function rRate(){const L=S.rate!==null;
 $('rateFormWrap').hidden=L;$('rateLockedWrap').hidden=!L;
 if(L)$('chipTxt').textContent=money(S.rate);
 $('rateHint').textContent=L?(S.customers.length?
-'Rate is fixed for this bill. Changing it needs a new bill.':
+'Changing the rate recalculates all customers.':
 'You can still change the rate until customers are added.'):'';
 $('terms').disabled=!L;$('termBtn').disabled=!L}
 $('rateForm').addEventListener('submit',e=>{e.preventDefault();
 $('rateErr').textContent='';
 const r=pRate($('rate').value);
 if(r.err){$('rateErr').textContent=r.err;sErr();$('rate').focus();return}
-S.rate=r.p;$('rate').value='';save();render();$('cname').focus();toast('Rate set:'+money(r.p))});
+S.rate=r.p;for(const c of S.customers)c.amount=r10(c.units*S.rate);$('rate').value='';save();render();$('cname').focus();toast('Rate set:'+money(r.p))});
 $('chgBtn').onclick=async()=>{
-if(!S.customers.length){S.rate=null;save();render();$('rate').focus();return}
-if(!await ask('Start a new bill?','The rate is fixed once customers exist. A different rate needs a new bill and clears all '+S.customers.length+' customers.','Clear&change rate'))return;
-S.customers=[];S.rate=null;draftTerms=[];save();render();$('rate').focus();toast('New bill started')};
+if(S.customers.length&&!await ask('Change rate?','The new rate will recalculate all '+S.customers.length+' customers. Units stay the same.','Change rate'))return;
+$('rate').value=(S.rate/100).toFixed(2);$('rateFormWrap').hidden=false;$('rateLockedWrap').hidden=true;$('rate').focus()};
 function setLang(l){nameLang=l;
 $('langEn').classList.toggle('on',l==='en');
 $('langUr').classList.toggle('on',l==='ur');
@@ -199,8 +198,10 @@ const wa=document.createElement('button');wa.type='button';wa.className='btn wa-
 wa.textContent='\uD83D\uDCF2 WhatsApp';wa.onclick=()=>waShare(waTextOne(c));
 const acts=document.createElement('div');acts.className='cust-actions';const pf=document.createElement('button');pf.type='button';pf.className='btn btn-ghost';
 pf.textContent='\uD83D\uDCC4 PDF';pf.onclick=()=>pdfOne(c);
-acts.append(pr,wa,pf);
+const ed=document.createElement('button');ed.type='button';ed.className='btn btn-ghost';ed.textContent='\u270F\uFE0F Edit';ed.onclick=()=>editCust(c.id,d);
+acts.append(ed,pr,wa,pf);
 d.append(top,meta,amt,acts);w.appendChild(d)})}
+function editCust(id,card){const c=S.customers.find(x=>x.id===id);if(!c)return;const m=card.querySelector('.cust-meta'),a=card.querySelector('.cust-amt'),ac=card.querySelector('.cust-actions');m.style.display=a.style.display=ac.style.display='none';const w=document.createElement('div');w.innerHTML='<input class="inp" inputmode="numeric" value="'+c.units+'"><div class="cust-actions" style="margin-top:10px"><button type="button" class="btn btn-pri" style="flex:1">Save</button><button type="button" class="btn btn-ghost" style="flex:1">Cancel</button></div>';const inp=w.querySelector('input'),bs=w.querySelectorAll('button');bs[0].onclick=()=>{const u=pUnits(inp.value);if(u.err){toast(u.err);sErr();inp.focus();return}c.terms=[u.n];c.units=u.n;c.amount=r10(u.n*S.rate);save();render();sOk();toast('Units updated')};bs[1].onclick=()=>render();card.appendChild(w);inp.focus();inp.select()}
 const _av={};const fmtA=p=>{p=Math.round(p);return grp(String(Math.floor(p/100)))+'.'+String(p%100).padStart(2,'0')};function animNum(id,to,isM){const el=$(id);if(!el)return;const F=isM===2?fmtA:isM?money:null;const from=_av[id]||0;_av[id]=to;if(from===to){el.textContent=F?F(to):grp(String(to));return}const t0=performance.now();(function fr(ts){const p=Math.min(1,(ts-t0)/450),e=1-Math.pow(1-p,3),v=from+(to-from)*e;el.textContent=p>=1?(F?F(to):grp(String(to))):(F?F(v):grp(String(Math.round(v))));if(p<1&&_av[id]===to)requestAnimationFrame(fr)})(t0)}function updTop(t){animNum('topAmt',t.a,2);animNum('topUnits',t.u,0);const c=$('topCust');if(c)c.textContent=t.n;const el=$('topAmt'),n=fmtA(t.a).length;el.classList.toggle('s1',n>9&&n<=12);el.classList.toggle('s2',n>12)}
 function rTotals(){const t=totals();
 $('tUnits').textContent=grp(String(t.u));
@@ -348,7 +349,7 @@ const hide=()=>{if(!sp||sp.dataset.gone)return;sp.dataset.gone='1';
 sp.classList.add('hide');setTimeout(()=>sp.remove(),700)};
 sp.addEventListener('click',hide);setTimeout(hide,1400)}catch(_){}
 window.addEventListener('pwa-update',()=>{$('updBar').hidden=false});
-const APP_VER='4.4';
+const APP_VER='4.5';
 function showUpdBar(){$('updBar').hidden=false}
 async function applyUpdate(){toast('Updating to the new version\u2026');
 try{if('caches' in window){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(_){}
